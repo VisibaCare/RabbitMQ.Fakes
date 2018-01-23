@@ -736,5 +736,16 @@ namespace RabbitMQ.Fakes.Tests
             Assert.That(node.Queues["my_queue"].Messages.Count, Is.EqualTo(expectedMessageCount));
             Assert.That(model.WorkingMessages.Count, Is.EqualTo(expectedMessageCount));
         }
+
+        [Test]
+        public void ModelReportsAsOpenUntilClosed()
+        {
+            var node = new RabbitServer();
+            var model = new FakeModel(node);
+            Assert.That(model.IsOpen, Is.True);
+
+            model.Close();
+            Assert.That(model.IsOpen, Is.False);
+        }
     }
 }

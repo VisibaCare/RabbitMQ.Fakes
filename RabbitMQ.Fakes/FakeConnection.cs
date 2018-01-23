@@ -13,13 +13,14 @@ namespace RabbitMQ.Fakes
         {
             _server = server;
             Models = new List<FakeModel>();
+            IsOpen = true;
         }
 
         public List<FakeModel> Models { get; private set; }
 
         public void Dispose()
         {
-            
+            Close();
         }
 
         public IModel CreateModel()
