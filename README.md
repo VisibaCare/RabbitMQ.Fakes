@@ -1,4 +1,4 @@
-# This project is dead. Please do not use.
+# THIS PROJECT IS DEAD - PLEASE FIND AN ALTERNATIVE
 
 # RabbitMQ.Fakes
 RabbitMQ.Fakes is a library that contains fake implementations of the RabbitMQ.Client interfaces.  These are intended to be used for testing so that unit tests who depend on RabbitMQ can be executed fully in memory withouth the dependence on an external RabbitMQ server.
