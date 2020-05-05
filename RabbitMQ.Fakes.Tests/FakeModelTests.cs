@@ -696,6 +696,7 @@ namespace RabbitMQ.Fakes.Tests
             // arrange
             var node = new RabbitServer();
             var model = new FakeModel(node);
+            var consumer = new QueueingBasicConsumer();
 
             model.ExchangeDeclare("my_exchange", ExchangeType.Direct);
             model.QueueDeclare("my_queue");
@@ -703,14 +704,14 @@ namespace RabbitMQ.Fakes.Tests
 
             var encodedMessage = Encoding.ASCII.GetBytes("hello world!");
             model.BasicPublish("my_exchange", null, new BasicProperties(), encodedMessage);
-            model.BasicConsume("my_queue", false, new EventingBasicConsumer(model));
+            model.BasicConsume("my_queue", false, consumer);
 
             // act
-            var deliveryTag = model.WorkingMessages.First().Key;
-            model.BasicNack(deliveryTag, false, requeue);
+            consumer.Queue.TryDequeue(out var message);
+            model.BasicNack(message.DeliveryTag, false, requeue);
 
             // assert
-            Assert.That(node.Queues["my_queue"].Messages.Count, Is.EqualTo(expectedMessageCount));
+            Assert.That(consumer.Queue.Count, Is.EqualTo(expectedMessageCount));
             Assert.That(model.WorkingMessages.Count, Is.EqualTo(expectedMessageCount));
         }
 

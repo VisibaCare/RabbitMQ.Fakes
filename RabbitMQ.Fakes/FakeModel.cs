@@ -334,14 +334,15 @@ namespace RabbitMQ.Fakes
 
         private void NotifyConsumerWhenMessagesAreReceived(string consumerTag, IBasicConsumer consumer, Queue queueInstance)
         {
-            queueInstance.MessagePublished += (sender, message) => { NotifyConsumerOfMessage(consumerTag, consumer, message); };
+            queueInstance.MessagePublished += (sender, message) => NotifyConsumerOfExistingMessages(consumerTag, consumer, queueInstance);
         }
 
         private void NotifyConsumerOfExistingMessages(string consumerTag, IBasicConsumer consumer, Queue queueInstance)
         {
-            foreach (var message in queueInstance.Messages)
+            while (queueInstance.Messages.Any())
             {
-                NotifyConsumerOfMessage(consumerTag, consumer, message);
+                if (queueInstance.Messages.TryDequeue(out var message))
+                    NotifyConsumerOfMessage(consumerTag, consumer, message);
             }
         }
 
