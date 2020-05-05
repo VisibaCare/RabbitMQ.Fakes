@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Net;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -19,14 +17,6 @@ namespace RabbitMQ.Fakes
 
         public List<FakeModel> Models { get; private set; }
 
-        public EndPoint LocalEndPoint { get; set; }
-
-        public EndPoint RemoteEndPoint { get; set; }
-
-        public int LocalPort { get; set; }
-
-        public int RemotePort { get; set; }
-
         public void Dispose()
         {
             
@@ -42,20 +32,20 @@ namespace RabbitMQ.Fakes
 
         public void Close()
         {
-            Close(1,null,0);
+            Close(1, null, TimeSpan.Zero);
         }
 
         public void Close(ushort reasonCode, string reasonText)
         {
-            Close(reasonCode,reasonText,0);
+            Close(reasonCode, reasonText, TimeSpan.Zero);
         }
 
-        public void Close(int timeout)
+        public void Close(TimeSpan timeout)
         {
-            Close(1,null,timeout);
+            Close(1, null, timeout);
         }
 
-        public void Close(ushort reasonCode, string reasonText, int timeout)
+        public void Close(ushort reasonCode, string reasonText, TimeSpan timeout)
         {
             IsOpen = false;
             CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, reasonCode, reasonText);
@@ -65,19 +55,20 @@ namespace RabbitMQ.Fakes
 
         public void Abort()
         {
-            Abort(1, null, 0);
+            Abort(1, null, TimeSpan.Zero);
         }
 
-        public void Abort(int timeout)
+        public void Abort(TimeSpan timeout)
         {
-           Abort(1,null,timeout);
+           Abort(1, null, timeout);
         }
 
         public void Abort(ushort reasonCode, string reasonText)
         {
-            Abort(reasonCode, reasonText, 0);
+            Abort(reasonCode, reasonText, TimeSpan.Zero);
         }
-        public void Abort(ushort reasonCode, string reasonText, int timeout)
+
+        public void Abort(ushort reasonCode, string reasonText, TimeSpan timeout)
         {
             IsOpen = false;
             CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library,reasonCode,reasonText );
@@ -85,38 +76,32 @@ namespace RabbitMQ.Fakes
             this.Models.ForEach(m=>m.Abort());
         }
 
+        public void UpdateSecret(string newSecret, string reason)
+        {
+        }
+
         public void HandleConnectionBlocked(string reason)
         {
-            
+            throw new NotImplementedException();
         }
 
         public void HandleConnectionUnblocked()
         {
-            
-        }
-
-        public AmqpTcpEndpoint Endpoint { get; set; }
-
-        public IProtocol Protocol { get; set; }
-
-        IDictionary<string, object> IConnection.ServerProperties
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        IList<ShutdownReportEntry> IConnection.ShutdownReport
-        {
-            get { throw new NotImplementedException(); }
+            throw new NotImplementedException();
         }
 
         public string ClientProvidedName { get; }
-        public ConsumerWorkService ConsumerWorkService { get; }
+
+#pragma warning disable CS0067 // Unused events (they're part of IConnection)
+
         public event EventHandler<CallbackExceptionEventArgs> CallbackException;
         public event EventHandler<EventArgs> RecoverySucceeded;
         public event EventHandler<ConnectionRecoveryErrorEventArgs> ConnectionRecoveryError;
         public event EventHandler<ConnectionBlockedEventArgs> ConnectionBlocked;
         public event EventHandler<ShutdownEventArgs> ConnectionShutdown;
         public event EventHandler<EventArgs> ConnectionUnblocked;
+
+#pragma warning restore CS0067
 
         public ushort ChannelMax { get; set; }
 
@@ -127,11 +112,11 @@ namespace RabbitMQ.Fakes
 
         public uint FrameMax { get; set; }
 
-        public ushort Heartbeat { get; set; }
+        public TimeSpan Heartbeat { get; set; }
 
-        public IDictionary ClientProperties { get; set; }
+        public IDictionary<string, object> ClientProperties { get; set; }
 
-        public IDictionary ServerProperties { get; set; }
+        public IDictionary<string, object> ServerProperties { get; set; }
 
         public AmqpTcpEndpoint[] KnownHosts { get; set; }
 
@@ -141,6 +126,14 @@ namespace RabbitMQ.Fakes
 
         public bool AutoClose { get; set; }
 
-        public IList ShutdownReport { get; set; }
+        public IList<ShutdownReportEntry> ShutdownReport { get; set; }
+
+        public AmqpTcpEndpoint Endpoint => throw new NotImplementedException();
+
+        public IProtocol Protocol => throw new NotImplementedException();
+
+        public int LocalPort => throw new NotImplementedException();
+
+        public int RemotePort => throw new NotImplementedException();
     }
 }

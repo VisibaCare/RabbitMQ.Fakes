@@ -29,7 +29,7 @@ namespace RabbitMQ.Fakes.Tests.UseCases
                 var message = channel.BasicGet("my_queue", autoAck: false);
                 
                 Assert.That(message,Is.Not.Null);
-                var messageBody = Encoding.ASCII.GetString(message.Body);
+                var messageBody = Encoding.ASCII.GetString(message.Body.Span);
 
                 Assert.That(messageBody,Is.EqualTo("hello_world"));
 
@@ -76,13 +76,13 @@ namespace RabbitMQ.Fakes.Tests.UseCases
                 var message = channel.BasicGet("my_queue", autoAck: false);
 
                 Assert.That(message, Is.Not.Null);
-                var messageBody = Encoding.ASCII.GetString(message.Body);
+                var messageBody = Encoding.ASCII.GetString(message.Body.Span);
 
                 Assert.That(messageBody, Is.EqualTo("hello_world"));
 
                 var actualBasicProperties = message.BasicProperties;
 
-                actualBasicProperties.ShouldBeEquivalentTo(basicProperties);
+                actualBasicProperties.Should().BeEquivalentTo(basicProperties);
 
                 channel.BasicAck(message.DeliveryTag, multiple: false);
             }
@@ -101,14 +101,14 @@ namespace RabbitMQ.Fakes.Tests.UseCases
             using (var connection = connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                var consumer = new QueueingBasicConsumer(channel);
+                var consumer = new QueueingBasicConsumer();
                 channel.BasicConsume("my_queue", false, consumer);
 
                 BasicDeliverEventArgs messageOut;
-                if (consumer.Queue.Dequeue(5000, out messageOut))
+                if (consumer.Queue.TryDequeue(out messageOut))
                 {
                     var message = (BasicDeliverEventArgs) messageOut;
-                    var messageBody = Encoding.ASCII.GetString(message.Body);
+                    var messageBody = Encoding.ASCII.GetString(message.Body.Span);
 
                     Assert.That(messageBody, Is.EqualTo("hello_world"));
 
@@ -131,16 +131,16 @@ namespace RabbitMQ.Fakes.Tests.UseCases
             using (var connection = connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                var consumer = new QueueingBasicConsumer(channel);
+                var consumer = new QueueingBasicConsumer();
                 channel.BasicConsume("my_queue", false, consumer);
 
                 SendMessage(rabbitServer, "my_exchange", "hello_world");
 
                 BasicDeliverEventArgs messageOut;
-                if (consumer.Queue.Dequeue(5000, out messageOut))
+                if (consumer.Queue.TryDequeue(out messageOut))
                 {
                     var message = (BasicDeliverEventArgs)messageOut;
-                    var messageBody = Encoding.ASCII.GetString(message.Body);
+                    var messageBody = Encoding.ASCII.GetString(message.Body.Span);
 
                     Assert.That(messageBody, Is.EqualTo("hello_world"));
 

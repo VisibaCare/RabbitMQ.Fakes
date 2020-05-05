@@ -654,7 +654,7 @@ namespace RabbitMQ.Fakes.Tests
             var response = model.BasicGet("my_queue",false);
 
             // Assert
-            Assert.That(response.Body, Is.EqualTo(encodedMessage));
+            Assert.That(response.Body.ToArray(), Is.EqualTo(encodedMessage));
             Assert.That(response.DeliveryTag, Is.GreaterThan(0));
         }
 

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using RabbitMQ.Client.Framing;
 using RabbitMQ.Fakes.models;
 using Queue = RabbitMQ.Fakes.models.Queue;
 
@@ -60,7 +59,7 @@ namespace RabbitMQ.Fakes
 
         public IBasicProperties CreateBasicProperties()
         {
-            return new BasicProperties();
+            return new Client.Framing.BasicProperties();
         }
 
         public void ExchangeBindNoWait(string destination, string source, string routingKey, IDictionary<string, object> arguments)
@@ -370,6 +369,11 @@ namespace RabbitMQ.Fakes
                 consumer.HandleBasicCancelOk(consumerTag);
         }
 
+        public void BasicCancelNoWait(string consumerTag)
+        {
+            BasicCancel(consumerTag);
+        }
+
         private long _lastDeliveryTag;
         public readonly ConcurrentDictionary<ulong, RabbitMessage> WorkingMessages = new ConcurrentDictionary<ulong, RabbitMessage>();
 
@@ -418,22 +422,22 @@ namespace RabbitMQ.Fakes
             ApplyPrefetchToAllChannels = global;
         }
 
-        public void BasicPublish(PublicationAddress addr, IBasicProperties basicProperties, byte[] body)
+        public void BasicPublish(PublicationAddress addr, IBasicProperties basicProperties, ReadOnlyMemory<byte> body)
         {
             BasicPublish(exchange: addr.ExchangeName, routingKey: addr.RoutingKey, mandatory: true, immediate: true, basicProperties: basicProperties, body: body);
         }
 
-        public void BasicPublish(string exchange, string routingKey, IBasicProperties basicProperties, byte[] body)
+        public void BasicPublish(string exchange, string routingKey, IBasicProperties basicProperties, ReadOnlyMemory<byte> body)
         {
             BasicPublish(exchange: exchange, routingKey: routingKey, mandatory: true, immediate: true, basicProperties: basicProperties, body: body);
         }
 
-        public void BasicPublish(string exchange, string routingKey, bool mandatory, IBasicProperties basicProperties, byte[] body)
+        public void BasicPublish(string exchange, string routingKey, bool mandatory, IBasicProperties basicProperties, ReadOnlyMemory<byte> body)
         {
             BasicPublish(exchange: exchange, routingKey: routingKey, mandatory: mandatory, immediate: true, basicProperties: basicProperties, body: body);
         }
 
-        public void BasicPublish(string exchange, string routingKey, bool mandatory, bool immediate, IBasicProperties basicProperties, byte[] body)
+        public void BasicPublish(string exchange, string routingKey, bool mandatory, bool immediate, IBasicProperties basicProperties, ReadOnlyMemory<byte> body)
         {
             var parameters = new RabbitMessage
             {
@@ -442,7 +446,7 @@ namespace RabbitMQ.Fakes
                 Mandatory = mandatory,
                 Immediate = immediate,
                 BasicProperties = basicProperties,
-                Body = body
+                Body = body.ToArray()
             };
 
             Func<string, Exchange> addExchange = s =>
