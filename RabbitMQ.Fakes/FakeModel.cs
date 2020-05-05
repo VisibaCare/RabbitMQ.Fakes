@@ -177,8 +177,7 @@ namespace RabbitMQ.Fakes
 
         public QueueDeclareOk QueueDeclare()
         {
-            var name = Guid.NewGuid().ToString();
-            return QueueDeclare(name, durable: false, exclusive: false, autoDelete: false, arguments: null);
+            return QueueDeclare("", durable: false, exclusive: false, autoDelete: false, arguments: null);
         }
 
         public QueueDeclareOk QueueDeclarePassive(string queue)
@@ -203,6 +202,11 @@ namespace RabbitMQ.Fakes
 
         public QueueDeclareOk QueueDeclare(string queue, bool durable, bool exclusive, bool autoDelete, IDictionary<string, object> arguments)
         {
+            if (string.IsNullOrEmpty(queue))
+            {
+                queue = Guid.NewGuid().ToString();
+            }
+
             var queueInstance = new Queue
             {
                 Name = queue,
