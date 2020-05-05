@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Fakes.models;
@@ -359,7 +360,14 @@ namespace RabbitMQ.Fakes
             Func<ulong, RabbitMessage, RabbitMessage> updateFunction = (key, existingMessage) => existingMessage;
             WorkingMessages.AddOrUpdate(deliveryTag, message, updateFunction);
 
-            consumer.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, basicProperties, body);
+            if (consumer is IAsyncBasicConsumer asyncConsumer)
+            {
+                Task.Run(() => asyncConsumer.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, basicProperties, body)).GetAwaiter().GetResult();
+            }
+            else
+            {
+                consumer.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, basicProperties, body);
+            }
         }
 
         public void BasicCancel(string consumerTag)
@@ -367,8 +375,14 @@ namespace RabbitMQ.Fakes
             IBasicConsumer consumer;
             _consumers.TryRemove(consumerTag, out consumer);
 
-            if (consumer != null)
+            if (consumer is IAsyncBasicConsumer asyncConsumer)
+            {
+                Task.Run(() => asyncConsumer.HandleBasicCancelOk(consumerTag)).GetAwaiter().GetResult();
+            }
+            else if (consumer != null)
+            {
                 consumer.HandleBasicCancelOk(consumerTag);
+            }
         }
 
         public void BasicCancelNoWait(string consumerTag)
