@@ -515,27 +515,14 @@ namespace RabbitMQ.Fakes
 
         public void BasicNack(ulong deliveryTag, bool multiple, bool requeue)
         {
-            if (requeue) return;
-
-            foreach (var queue in WorkingMessages.Select(m => m.Value.Queue))
-            {
-                _server.Queues.TryGetValue(queue, out var queueInstance);
-
-                if (queueInstance != null)
-                {
-                    queueInstance.Messages = new ConcurrentQueue<RabbitMessage>();
-                }
-            }
-
             WorkingMessages.TryRemove(deliveryTag, out var message);
             if (message == null) return;
 
-            foreach (var workingMessage in WorkingMessages)
-            {
-                _server.Queues.TryGetValue(workingMessage.Value.Queue, out var queueInstance);
+            if (!requeue) return;
 
-                queueInstance?.PublishMessage(workingMessage.Value);
-            }
+            _server.Queues.TryGetValue(message.Queue, out var queueInstance);
+
+            queueInstance?.PublishMessage(message);
         }
 
         public void BasicRecover(bool requeue)
