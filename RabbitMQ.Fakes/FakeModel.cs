@@ -634,8 +634,8 @@ namespace RabbitMQ.Fakes
 
         event EventHandler<CallbackExceptionEventArgs> IModel.CallbackException
         {
-            add { throw new NotImplementedException(); }
-            remove { throw new NotImplementedException(); }
+            add { }
+            remove { }
         }
 
         event EventHandler<FlowControlEventArgs> IModel.FlowControl
