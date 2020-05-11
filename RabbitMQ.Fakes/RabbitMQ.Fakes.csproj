@@ -1,13 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>fake_rabbit</AssemblyTitle>
-    <Product>fake_rabbit</Product>
     <Description>Fake RabbitMQ implementation for usage in testing</Description>
-    <Copyright>Copyright 2015</Copyright>
-    <Version>1.0.0.0</Version>
-    <Authors>Parametric Portfolio Associates</Authors>
-    <PackageId>RabbitMQ.Fakes</PackageId>
+    <Copyright>Copyright 2020</Copyright>
+    <Authors>Visiba Care; Parametric Portfolio Associates</Authors>
+    <PackageId>VC.RabbitMQ.Fakes</PackageId>
     <PackageTags>RabbitMQ Fake Fakes AMQP</PackageTags>
   </PropertyGroup>
   

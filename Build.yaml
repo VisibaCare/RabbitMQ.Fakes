@@ -1,0 +1,20 @@
+resources:
+  repositories:
+  - repository: toolsRepo
+    name: 'Visiba.Devops.PowershellTools'
+    type: git
+
+steps:
+- checkout: self
+  path: s
+  displayName: Checking out current repository
+
+- checkout: toolsRepo
+  path: pstools
+  displayName: Checking out tools repository
+
+- template: BuildLibs.yaml@toolsRepo
+  parameters:
+    sourceDirectory: 'RabbitMQ.Fakes'
+    unitTestDirectory: 'RabbitMQ.Fakes.Tests'
+    nugetConfig: './.nuget/NuGet.Config'
