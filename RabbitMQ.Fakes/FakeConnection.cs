@@ -9,14 +9,17 @@ namespace RabbitMQ.Fakes
     {
         private readonly RabbitServer _server;
 
+        private readonly object _lock = new object();
+
         public FakeConnection(RabbitServer server)
         {
-            _server = server;
-            Models = new List<FakeModel>();
+            _server = server ?? throw new ArgumentNullException(nameof(server));
             IsOpen = true;
         }
 
-        public List<FakeModel> Models { get; private set; }
+        public List<FakeModel> Models => new List<FakeModel>(_models);
+
+        private readonly List<FakeModel> _models = new List<FakeModel>();
 
         public void Dispose()
         {
@@ -26,7 +29,14 @@ namespace RabbitMQ.Fakes
         public IModel CreateModel()
         {
             var model = new FakeModel(_server);
-            Models.Add(model);
+
+            lock (_lock)
+            {
+                if (IsOpen)
+                {
+                    _models.Add(model);
+                }
+            }
 
             return model;
         }
@@ -48,10 +58,13 @@ namespace RabbitMQ.Fakes
 
         public void Close(ushort reasonCode, string reasonText, TimeSpan timeout)
         {
-            IsOpen = false;
-            CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, reasonCode, reasonText);
+            lock (_lock)
+            {
+                IsOpen = false;
+                CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, reasonCode, reasonText);
 
-            Models.ForEach(m=>m.Close());
+                _models.ForEach(m=>m.Close());
+            }
         }
 
         public void Abort()
@@ -71,10 +84,13 @@ namespace RabbitMQ.Fakes
 
         public void Abort(ushort reasonCode, string reasonText, TimeSpan timeout)
         {
-            IsOpen = false;
-            CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library,reasonCode,reasonText );
+            lock (_lock)
+            {
+                IsOpen = false;
+                CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library,reasonCode,reasonText );
 
-            this.Models.ForEach(m=>m.Abort());
+                _models.ForEach(m=>m.Abort());
+            }
         }
 
         public void UpdateSecret(string newSecret, string reason)
