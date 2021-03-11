@@ -330,6 +330,15 @@ namespace RabbitMQ.Fakes
                 Func<string, IBasicConsumer, IBasicConsumer> updateFunction = (s, basicConsumer) => basicConsumer;
                 _consumers.AddOrUpdate(consumerTag, consumer, updateFunction);
 
+                if (consumer is IAsyncBasicConsumer asyncConsumer)
+                {
+                    asyncConsumer.HandleBasicConsumeOk(consumerTag);
+                }
+                else
+                {
+                    consumer.HandleBasicConsumeOk(consumerTag);
+                }
+
                 NotifyConsumerOfExistingMessages(consumerTag, consumer, queueInstance);
                 NotifyConsumerWhenMessagesAreReceived(consumerTag, consumer, queueInstance);
             }
@@ -580,27 +589,63 @@ namespace RabbitMQ.Fakes
 
         public void Close()
         {
-            Close(ushort.MaxValue, string.Empty);
+            Close(200, string.Empty);
         }
 
         public void Close(ushort replyCode, string replyText)
         {
+            Close(ShutdownInitiator.Application, 200, string.Empty);
+        }
+
+        public void Close(ShutdownInitiator initiator, ushort replyCode, string replyText)
+        {
             IsClosed = true;
             IsOpen = false;
-            CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, replyCode, replyText);
+            CloseReason = new ShutdownEventArgs(initiator, replyCode, replyText);
+
+            foreach (var consumer in _consumers.Values)
+            {
+                if (consumer is IAsyncBasicConsumer asyncConsumer)
+                {
+                    asyncConsumer.HandleModelShutdown(this, CloseReason);
+                }
+                else
+                {
+                    consumer.HandleModelShutdown(this, CloseReason);
+                }
+            }
         }
 
         public void Abort()
         {
-            Abort(ushort.MaxValue, string.Empty);
-
+            Abort(200, string.Empty);
         }
 
         public void Abort(ushort replyCode, string replyText)
         {
-            IsClosed = true;
-            IsOpen = false;
-            CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, replyCode, replyText);
+            Close(replyCode, replyText);
+        }
+
+        public void SimulateRecovery()
+        {
+            IsClosed = false;
+            IsOpen = true;
+            CloseReason = null;
+
+            foreach (var kvp in _consumers)
+            {
+                var consumerTag = kvp.Key;
+                var consumer = kvp.Value;
+
+                if (consumer is IAsyncBasicConsumer asyncConsumer)
+                {
+                    asyncConsumer.HandleBasicConsumeOk(consumerTag);
+                }
+                else
+                {
+                    consumer.HandleBasicConsumeOk(consumerTag);
+                }
+            }
         }
 
         public IBasicConsumer DefaultConsumer { get; set; }

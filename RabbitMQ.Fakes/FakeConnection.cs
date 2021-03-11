@@ -5,7 +5,7 @@ using RabbitMQ.Client.Events;
 
 namespace RabbitMQ.Fakes
 {
-    public class FakeConnection : IConnection
+    public class FakeConnection : IConnection, IAutorecoveringConnection
     {
         private readonly RabbitServer _server;
 
@@ -43,7 +43,7 @@ namespace RabbitMQ.Fakes
 
         public void Close()
         {
-            Close(1, null, TimeSpan.Zero);
+            Close(200, null, TimeSpan.Zero);
         }
 
         public void Close(ushort reasonCode, string reasonText)
@@ -53,28 +53,33 @@ namespace RabbitMQ.Fakes
 
         public void Close(TimeSpan timeout)
         {
-            Close(1, null, timeout);
+            Close(200, null, timeout);
         }
 
         public void Close(ushort reasonCode, string reasonText, TimeSpan timeout)
         {
+            Close(ShutdownInitiator.Application, reasonCode, reasonText);
+        }
+
+        public void Close(ShutdownInitiator initiator, ushort reasonCode, string reasonText)
+        {
             lock (_lock)
             {
                 IsOpen = false;
-                CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, reasonCode, reasonText);
+                CloseReason = new ShutdownEventArgs(initiator, reasonCode, reasonText);
 
-                _models.ForEach(m=>m.Close());
+                _models.ForEach(m=>m.Close(initiator, reasonCode, reasonText));
             }
         }
 
         public void Abort()
         {
-            Abort(1, null, TimeSpan.Zero);
+            Abort(200, null, TimeSpan.Zero);
         }
 
         public void Abort(TimeSpan timeout)
         {
-           Abort(1, null, timeout);
+           Abort(200, null, timeout);
         }
 
         public void Abort(ushort reasonCode, string reasonText)
@@ -84,12 +89,19 @@ namespace RabbitMQ.Fakes
 
         public void Abort(ushort reasonCode, string reasonText, TimeSpan timeout)
         {
+            Close(ShutdownInitiator.Application, reasonCode, reasonText);
+        }
+
+        public void SimulateRecovery()
+        {
             lock (_lock)
             {
-                IsOpen = false;
-                CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library,reasonCode,reasonText );
+                IsOpen = true;
+                CloseReason = null;
 
-                _models.ForEach(m=>m.Abort());
+                _models.ForEach(m => m.SimulateRecovery());
+
+                RecoverySucceeded?.Invoke(this, EventArgs.Empty);
             }
         }
 
